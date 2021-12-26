@@ -1,0 +1,10 @@
+stages:
+  - build
+
+build-test-program:
+  stage: build
+  image: rust:latest
+  script:
+    - cd program
+    - cargo build --verbose
+    - cargo test --verbose
