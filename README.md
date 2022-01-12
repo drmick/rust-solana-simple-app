@@ -1,5 +1,7 @@
 # Solana program: Index
 
+This program stored last five BTC prices
+
 The project consists of three modules
 1. [solana-program](program) (Smart Contract) 
 2. [price-sender](client/src/price_sender) - module that adds the BTC price to solana-program
