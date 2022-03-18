@@ -1,5 +1,10 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{account_info::{AccountInfo, next_account_info}, entrypoint, msg, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint, msg,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+};
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, Default)]
 pub struct AppState {
@@ -38,12 +43,15 @@ pub fn process_instruction(
 
     let mut app_state: AppState = AppState::try_from_slice(&account.data.borrow())?;
     app_state.prices.rotate_right(1);
-    app_state.prices[0] = StoredPrice { price: incoming_price.price, is_some: true };
+    app_state.prices[0] = StoredPrice {
+        price: incoming_price.price,
+        is_some: true,
+    };
     app_state.average_price = average(&app_state.prices);
 
     if app_state.average_price.is_nan() {
         //prices not found
-        return Err(ProgramError::Custom(1))
+        return Err(ProgramError::Custom(1));
     }
     msg!("{:?}", app_state);
     app_state.serialize(&mut &mut account.data.borrow_mut()[..])?;
@@ -51,8 +59,11 @@ pub fn process_instruction(
 }
 
 fn average(arr: &[StoredPrice]) -> f32 {
-    arr.iter().filter(|it| it.is_some).map(|it| it.price).
-        sum::<f32>() as f32 / arr.iter().filter(|it| it.is_some).count() as f32
+    arr.iter()
+        .filter(|it| it.is_some)
+        .map(|it| it.price)
+        .sum::<f32>() as f32
+        / arr.iter().filter(|it| it.is_some).count() as f32
 }
 
 #[cfg(test)]
@@ -80,20 +91,22 @@ mod test {
 
         let accounts = vec![account];
 
-        let instruction_data = IncomingPrice{price: 10.0_f32}.try_to_vec().unwrap();
+        let instruction_data = IncomingPrice { price: 10.0_f32 }.try_to_vec().unwrap();
 
         process_instruction(&program_id, &accounts, &instruction_data).unwrap();
         assert_eq!(
             AppState::try_from_slice(&accounts[0].data.borrow())
-                .unwrap().average_price,
+                .unwrap()
+                .average_price,
             10.0_f32,
         );
-        let instruction_data = IncomingPrice{price: 20.0_f32}.try_to_vec().unwrap();
+        let instruction_data = IncomingPrice { price: 20.0_f32 }.try_to_vec().unwrap();
 
         process_instruction(&program_id, &accounts, &instruction_data).unwrap();
         assert_eq!(
             AppState::try_from_slice(&accounts[0].data.borrow())
-                .unwrap().average_price,
+                .unwrap()
+                .average_price,
             15.0_f32,
         );
     }

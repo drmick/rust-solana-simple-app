@@ -4,11 +4,11 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message;
 use solana_sdk::signature::Signer;
-use solana_sdk::signer::keypair::{Keypair, read_keypair_file};
+use solana_sdk::signer::keypair::{read_keypair_file, Keypair};
 use solana_sdk::transaction::Transaction;
 
-use crate::{Error, Result};
 use crate::utils;
+use crate::{Error, Result};
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct Price {
@@ -33,8 +33,7 @@ pub fn establish_connection() -> Result<RpcClient> {
 /// TODO (Need to refactoring)
 #[allow(deprecated)]
 pub fn get_balance_requirement(connection: &RpcClient) -> Result<u64> {
-    let account_fee =
-        connection.get_minimum_balance_for_rent_exemption(utils::get_data_size()?)?;
+    let account_fee = connection.get_minimum_balance_for_rent_exemption(utils::get_data_size()?)?;
 
     let (_, fee_calculator) = connection.get_recent_blockhash()?;
     let transaction_fee = fee_calculator.lamports_per_signature * 100;
@@ -83,11 +82,7 @@ pub fn get_program(keypair_path: &str, connection: &RpcClient) -> Result<Keypair
     Ok(program_keypair)
 }
 
-pub fn create_account(
-    player: &Keypair,
-    program: &Keypair,
-    connection: &RpcClient,
-) -> Result<()> {
+pub fn create_account(player: &Keypair, program: &Keypair, connection: &RpcClient) -> Result<()> {
     let index_pubkey = utils::get_public_key(&player.pubkey(), &program.pubkey())?;
 
     if let Err(_) = connection.get_account(&index_pubkey) {
@@ -104,8 +99,7 @@ pub fn create_account(
             &program.pubkey(),
         );
         let message = Message::new(&[instruction], Some(&player.pubkey()));
-        let transaction =
-            Transaction::new(&[player], message, connection.get_latest_blockhash()?);
+        let transaction = Transaction::new(&[player], message, connection.get_latest_blockhash()?);
 
         connection.send_and_confirm_transaction(&transaction)?;
     }
@@ -118,7 +112,12 @@ pub fn create_account(
 /// previously generated index account. The program will use that
 /// passed in address to add price after verifying
 /// that it owns the account that we have passed in.
-pub fn send_btc_price(player: &Keypair, program: &Keypair, connection: &RpcClient, price: f32) -> Result<()> {
+pub fn send_btc_price(
+    player: &Keypair,
+    program: &Keypair,
+    connection: &RpcClient,
+    price: f32,
+) -> Result<()> {
     let index_pubkey = utils::get_public_key(&player.pubkey(), &program.pubkey())?;
     let price = Price { value: price };
     let price = &price.try_to_vec().unwrap();
@@ -129,14 +128,16 @@ pub fn send_btc_price(player: &Keypair, program: &Keypair, connection: &RpcClien
         vec![AccountMeta::new(index_pubkey, false)],
     );
     let message = Message::new(&[instruction], Some(&player.pubkey()));
-    let transaction = Transaction::new(&[player],
-                                       message,
-                                       connection.get_latest_blockhash()?);
+    let transaction = Transaction::new(&[player], message, connection.get_latest_blockhash()?);
     connection.send_and_confirm_transaction(&transaction)?;
     Ok(())
 }
 
-pub fn get_average_price(player: &Keypair, program: &Keypair, connection: &RpcClient) -> Result<f32> {
+pub fn get_average_price(
+    player: &Keypair,
+    program: &Keypair,
+    connection: &RpcClient,
+) -> Result<f32> {
     let index_pubkey = utils::get_public_key(&player.pubkey(), &program.pubkey())?;
     let index_account = connection.get_account(&index_pubkey)?;
     Ok(utils::get_average_price(&index_account.data)?)

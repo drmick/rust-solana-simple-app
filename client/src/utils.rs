@@ -1,6 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signer::keypair::{Keypair, read_keypair_file};
+use solana_sdk::signer::keypair::{read_keypair_file, Keypair};
 use yaml_rust::YamlLoader;
 
 use crate::{Error, Result};
@@ -84,28 +84,30 @@ pub fn get_index_seed() -> &'static str {
 /// Derives and returns the price sender account public key for a given
 /// PLAYER, PROGRAM combination.
 pub fn get_public_key(player: &Pubkey, program: &Pubkey) -> Result<Pubkey> {
-    Ok(Pubkey::create_with_seed(
-        player,
-        get_index_seed(),
-        program,
-    )?)
+    Ok(Pubkey::create_with_seed(player, get_index_seed(), program)?)
 }
 
 /// Determines and reports the size of index schema data.
 pub fn get_data_size() -> Result<usize> {
-    let stored_prices = [StoredPrice::default(),
+    let stored_prices = [
         StoredPrice::default(),
         StoredPrice::default(),
         StoredPrice::default(),
-        StoredPrice::default()];
-    let encoded = AppSchema { prices: stored_prices, average_price: f32::default() }
-        .try_to_vec()
-        .map_err(|e| Error::SerializationError(e))?;
+        StoredPrice::default(),
+        StoredPrice::default(),
+    ];
+    let encoded = AppSchema {
+        prices: stored_prices,
+        average_price: f32::default(),
+    }
+    .try_to_vec()
+    .map_err(|e| Error::SerializationError(e))?;
     Ok(encoded.len())
 }
 
 /// Deserializes a index account and get average price
 pub fn get_average_price(data: &[u8]) -> Result<f32> {
-    let decoded: AppSchema = AppSchema::try_from_slice(data).map_err(|e| Error::SerializationError(e))?;
+    let decoded: AppSchema =
+        AppSchema::try_from_slice(data).map_err(|e| Error::SerializationError(e))?;
     Ok(decoded.average_price)
 }

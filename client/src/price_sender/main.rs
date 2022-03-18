@@ -1,28 +1,28 @@
-use std::time::Duration;
-use index_client as ic;
-use tokio::time::sleep;
 use crate::external::CMCService;
+use index_client as ic;
+use std::time::Duration;
+use tokio::time::sleep;
 mod external;
 
 #[tokio::main]
 async fn main() {
     let args = std::env::args().collect::<Vec<_>>();
     if args.len() != 3 {
-        eprintln!(
-            "invalid arguments. Required path to program keypair and CMC API KEY",
-        );
+        eprintln!("Invalid arguments. Required path to program keypair and CMC API KEY",);
         std::process::exit(-1);
     }
 
     let keypair_path = &args[1];
     let cmc_api_key: &String = &args[2];
 
-    let cmc_service = CMCService{api_key: cmc_api_key.to_string()};
+    let cmc_service = CMCService {
+        api_key: cmc_api_key.to_string(),
+    };
 
     loop {
         let price = cmc_service.get_btc_price().await;
         send_price(keypair_path, price);
-        sleep(Duration::from_secs(3600 )).await;
+        sleep(Duration::from_secs(3600)).await;
     }
 }
 
